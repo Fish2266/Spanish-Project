@@ -1,594 +1,594 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Early Space Suit — Interactive Viewer</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Early Space Suit — Interactive Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-          --cream: #f0ebe0;
-          --dark: #1a1714;
-          --gold: #c9a84c;
-          --muted: #6b6458;
-          --card-bg: rgba(240, 235, 224, 0.97);
-          --border: rgba(201, 168, 76, 0.4);
-        }
+  :root {
+    --cream: #f0ebe0;
+    --dark: #1a1714;
+    --gold: #c9a84c;
+    --muted: #6b6458;
+    --card-bg: rgba(240, 235, 224, 0.97);
+    --border: rgba(201, 168, 76, 0.4);
+  }
 
-        body {
-          background: var(--dark);
-          color: var(--cream);
-          font-family: 'DM Mono', monospace;
-          height: 100dvh;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          -webkit-tap-highlight-color: transparent;
-        }
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-        header {
-          padding: 14px 20px;
-          display: flex;
-          align-items: baseline;
-          gap: 12px;
-          border-bottom: 0.5px solid rgba(201, 168, 76, 0.2);
-          flex-shrink: 0;
-        }
+  header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    border-bottom: 0.5px solid rgba(201, 168, 76, 0.2);
+    flex-shrink: 0;
+  }
 
-        header h1 {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(15px, 3vw, 20px);
-          font-weight: 600;
-          color: var(--cream);
-          letter-spacing: 0.02em;
-        }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(15px, 3vw, 20px);
+    font-weight: 600;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+  }
 
-        header span {
-          font-size: clamp(9px, 2vw, 11px);
-          color: var(--muted);
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-        }
+  header span {
+    font-size: clamp(9px, 2vw, 11px);
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
 
-        #viewer {
-          position: relative;
-          flex: 1;
-          overflow: hidden;
-        }
+  #viewer {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+  }
 
-        #three-canvas {
-          width: 100%;
-          height: 100%;
-          display: block;
-          cursor: grab;
-          touch-action: none;
-        }
+  #three-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+  }
 
-        #three-canvas:active { cursor: grabbing; }
+  #three-canvas:active { cursor: grabbing; }
 
-        .hint {
-          position: absolute;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 10px;
-          color: var(--muted);
-          letter-spacing: 0.1em;
-          pointer-events: none;
-          text-transform: uppercase;
-          white-space: nowrap;
-        }
+  .hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
 
-        /* Annotation pins */
-        .pin {
-          position: absolute;
-          transform: translate(-50%, -50%);
-          cursor: pointer;
-          z-index: 10;
-          pointer-events: auto;
-        }
+  /* Annotation pins */
+  .pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 10;
+    pointer-events: auto;
+  }
 
-        .pin-outer {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          border: 1.5px solid var(--gold);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.2s, background 0.2s;
-          background: rgba(26, 23, 20, 0.75);
-        }
+  .pin-outer {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+    background: rgba(26, 23, 20, 0.75);
+  }
 
-        .pin-inner {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--gold);
-        }
+  .pin-inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
 
-        .pin:hover .pin-outer,
-        .pin.active .pin-outer {
-          transform: scale(1.3);
-          background: rgba(201, 168, 76, 0.25);
-        }
+  .pin:hover .pin-outer,
+  .pin.active .pin-outer {
+    transform: scale(1.3);
+    background: rgba(201, 168, 76, 0.25);
+  }
 
-        .pin-label {
-          position: absolute;
-          left: 26px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 10px;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--gold);
-          white-space: nowrap;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.2s;
-          text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-        }
+  .pin-label {
+    position: absolute;
+    left: 26px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  }
 
-        .pin:hover .pin-label,
-        .pin.active .pin-label { opacity: 1; }
+  .pin:hover .pin-label,
+  .pin.active .pin-label { opacity: 1; }
 
-        /* Info card — full-width sheet on mobile, floating on desktop */
-        #info-card {
-          position: absolute;
-          width: 260px;
-          background: var(--card-bg);
-          border: 0.5px solid var(--border);
-          border-radius: 4px;
-          padding: 18px 20px;
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.22s, transform 0.22s;
-          z-index: 20;
-        }
+  /* Info card — full-width sheet on mobile, floating on desktop */
+  #info-card {
+    position: absolute;
+    width: 260px;
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s, transform 0.22s;
+    z-index: 20;
+  }
 
-        #info-card.visible {
-          opacity: 1;
-          pointer-events: auto;
-        }
+  #info-card.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
-        /* On small screens override to bottom sheet */
-        @media (max-width: 540px) {
-          #info-card {
-            width: calc(100% - 24px);
-            left: 12px !important;
-            bottom: 48px;
-            top: auto !important;
-            border-radius: 8px;
-          }
-        }
+  /* On small screens override to bottom sheet */
+  @media (max-width: 540px) {
+    #info-card {
+      width: calc(100% - 24px);
+      left: 12px !important;
+      bottom: 48px;
+      top: auto !important;
+      border-radius: 8px;
+    }
+  }
 
-        #info-card .card-label {
-          font-size: 10px;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--gold);
-          margin-bottom: 8px;
-        }
+  #info-card .card-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
 
-        #info-card h2 {
-          font-family: 'Playfair Display', serif;
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--dark);
-          margin-bottom: 8px;
-          line-height: 1.3;
-        }
+  #info-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
 
-        #info-card p {
-          font-size: 12px;
-          color: #3a3530;
-          line-height: 1.7;
-        }
+  #info-card p {
+    font-size: 12px;
+    color: #3a3530;
+    line-height: 1.7;
+  }
 
-        #info-card .close {
-          position: absolute;
-          top: 10px;
-          right: 12px;
-          background: none;
-          border: none;
-          font-size: 20px;
-          color: var(--muted);
-          cursor: pointer;
-          line-height: 1;
-          padding: 4px 6px;
-          font-family: 'DM Mono', monospace;
-          /* bigger tap target on mobile */
-          min-width: 32px;
-          min-height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+  #info-card .close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 6px;
+    font-family: 'DM Mono', monospace;
+    /* bigger tap target on mobile */
+    min-width: 32px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-        #info-card .close:hover { color: var(--dark); }
+  #info-card .close:hover { color: var(--dark); }
 
-        /* Loading */
-        #loading {
-          position: absolute;
-          inset: 0;
-          background: var(--dark);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          z-index: 100;
-          transition: opacity 0.6s;
-        }
+  /* Loading */
+  #loading {
+    position: absolute;
+    inset: 0;
+    background: var(--dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 100;
+    transition: opacity 0.6s;
+  }
 
-        #loading.hidden { opacity: 0; pointer-events: none; }
+  #loading.hidden { opacity: 0; pointer-events: none; }
 
-        #loading p {
-          font-size: 11px;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--muted);
-        }
+  #loading p {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
 
-        .spinner {
-          width: 32px;
-          height: 32px;
-          border: 1.5px solid rgba(201, 168, 76, 0.2);
-          border-top-color: var(--gold);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid rgba(201, 168, 76, 0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-        #error-msg {
-          display: none;
-          position: absolute;
-          inset: 0;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-          gap: 10px;
-          z-index: 101;
-          text-align: center;
-          padding: 40px;
-        }
+  #error-msg {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 101;
+    text-align: center;
+    padding: 40px;
+  }
 
-        #error-msg p { font-size: 13px; color: var(--muted); line-height: 1.7; }
-        #error-msg strong { color: var(--cream); font-size: 15px; }
-    </style>
+  #error-msg p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  #error-msg strong { color: var(--cream); font-size: 15px; }
+</style>
 </head>
 <body>
 
 <header>
-    <h1>Early Space Suit</h1>
-    <span>by Emilio — interactive viewer</span>
+  <h1>Early Space Suit</h1>
+  <span>by Emilio — interactive viewer</span>
 </header>
 
 <div id="viewer">
-    <canvas id="three-canvas"></canvas>
+  <canvas id="three-canvas"></canvas>
 
-    <div id="loading">
-        <div class="spinner"></div>
-        <p>Loading model…</p>
-    </div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading model…</p>
+  </div>
 
-    <div id="error-msg">
-        <strong>Model not found</strong>
-        <p>Make sure <code>completo_AR.glb</code> is in the same folder as this HTML file, then open via <code>python3 -m http.server</code>.</p>
-    </div>
+  <div id="error-msg">
+    <strong>Model not found</strong>
+    <p>Make sure <code>completo_AR.glb</code> is in the same folder as this HTML file, then open via <code>python3 -m http.server</code>.</p>
+  </div>
 
-    <div id="info-card">
-        <button class="close" id="close-card">×</button>
-        <div class="card-label">Component</div>
-        <h2 id="card-title"></h2>
-        <p id="card-desc"></p>
-    </div>
+  <div id="info-card">
+    <button class="close" id="close-card">×</button>
+    <div class="card-label">Component</div>
+    <h2 id="card-title"></h2>
+    <p id="card-desc"></p>
+  </div>
 
-    <div class="hint" id="hint">Drag to rotate · Scroll to zoom · Tap a pin</div>
+  <div class="hint" id="hint">Drag to rotate · Scroll to zoom · Tap a pin</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-    const ANNOTATIONS = [
-      { id: 'layers',      label: '3 layers of materials', desc: 'Empty description', pos: [0.4649, 1.1230, 0.0116] },
-      { id: 'helmet',      label: 'Aluminium helmet',       desc: 'Empty description', pos: [0.1119, 1.6218, 0.1331] },
-      { id: 'gloves',      label: 'Gloves',                 desc: 'Empty description', pos: [0.4688, 0.7766, 0.1608] },
-      { id: 'joints',      label: 'Joints',                 desc: 'Empty description', pos: [-0.0732, 1.0499, 0.0395] },
-      { id: 'lifesupport', label: 'Life support system',    desc: 'Empty description', pos: [0.2159, 1.0258, 0.2744] },
-      { id: 'oxygen',      label: 'Oxygen tank',            desc: 'Empty description', pos: [-0.2921, 0.8960, 0.5155] }
-    ];
+const ANNOTATIONS = [
+  { id: 'layers',      label: '3 layers of materials', desc: 'Empty description', pos: [0.4649, 1.1230, 0.0116] },
+  { id: 'helmet',      label: 'Aluminium helmet',       desc: 'Empty description', pos: [0.1119, 1.6218, 0.1331] },
+  { id: 'gloves',      label: 'Gloves',                 desc: 'Empty description', pos: [0.4688, 0.7766, 0.1608] },
+  { id: 'joints',      label: 'Joints',                 desc: 'Empty description', pos: [-0.0732, 1.0499, 0.0395] },
+  { id: 'lifesupport', label: 'Life support system',    desc: 'Empty description', pos: [0.2159, 1.0258, 0.2744] },
+  { id: 'oxygen',      label: 'Oxygen tank',            desc: 'Empty description', pos: [-0.2921, 0.8960, 0.5155] }
+];
 
-    const canvas  = document.getElementById('three-canvas');
-    const viewer  = document.getElementById('viewer');
+const canvas  = document.getElementById('three-canvas');
+const viewer  = document.getElementById('viewer');
 
-    /* ── Scene ── */
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1714);
+/* ── Scene ── */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1714);
 
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
-    /* Camera looks at world origin (0,0,0) — model will be centered there */
-    camera.position.set(0, 0, 3.2);
-    camera.lookAt(0, 0, 0);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+/* Camera looks at world origin (0,0,0) — model will be centered there */
+camera.position.set(0, 0, 3.2);
+camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.physicallyCorrectLights = true;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.physicallyCorrectLights = true;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    function resize() {
-      const w = viewer.clientWidth, h = viewer.clientHeight;
-      renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    }
-    resize();
-    window.addEventListener('resize', resize);
+function resize() {
+  const w = viewer.clientWidth, h = viewer.clientHeight;
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener('resize', resize);
 
-    /* ── Lighting ── */
-    /* Warm ambient base */
-    scene.add(new THREE.AmbientLight(0xfff0d0, 0.6));
+/* ── Lighting ── */
+/* Warm ambient base */
+scene.add(new THREE.AmbientLight(0xfff0d0, 0.6));
 
-    /* Key light — warm from upper front-right, casts shadows */
-    const keyLight = new THREE.SpotLight(0xfff5e0, 2.5);
-    keyLight.position.set(3, 5, 4);
-    keyLight.angle = Math.PI / 5;
-    keyLight.penumbra = 0.4;
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
-    scene.add(keyLight);
-    scene.add(keyLight.target); /* target stays at origin */
+/* Key light — warm from upper front-right, casts shadows */
+const keyLight = new THREE.SpotLight(0xfff5e0, 2.5);
+keyLight.position.set(3, 5, 4);
+keyLight.angle = Math.PI / 5;
+keyLight.penumbra = 0.4;
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(1024, 1024);
+scene.add(keyLight);
+scene.add(keyLight.target); /* target stays at origin */
 
-    /* Fill light — cool blue from left */
-    const fillLight = new THREE.DirectionalLight(0xaac8ff, 0.5);
-    fillLight.position.set(-4, 1, 2);
-    scene.add(fillLight);
+/* Fill light — cool blue from left */
+const fillLight = new THREE.DirectionalLight(0xaac8ff, 0.5);
+fillLight.position.set(-4, 1, 2);
+scene.add(fillLight);
 
-    /* Rim light — warm from behind, separates suit from background */
-    const rimLight = new THREE.DirectionalLight(0xffd080, 0.8);
-    rimLight.position.set(0, 2, -5);
-    scene.add(rimLight);
+/* Rim light — warm from behind, separates suit from background */
+const rimLight = new THREE.DirectionalLight(0xffd080, 0.8);
+rimLight.position.set(0, 2, -5);
+scene.add(rimLight);
 
-    /* Subtle under-fill so the boots aren't pure black */
-    const groundBounce = new THREE.DirectionalLight(0x6080a0, 0.25);
-    groundBounce.position.set(0, -3, 1);
-    scene.add(groundBounce);
+/* Subtle under-fill so the boots aren't pure black */
+const groundBounce = new THREE.DirectionalLight(0x6080a0, 0.25);
+groundBounce.position.set(0, -3, 1);
+scene.add(groundBounce);
 
-    /* ── Pivot — model + markers rotate together ── */
-    const pivot = new THREE.Group();
-    scene.add(pivot);
+/* ── Pivot — model + markers rotate together ── */
+const pivot = new THREE.Group();
+scene.add(pivot);
 
-    /* ── Load GLB ── */
-    const loadingEl = document.getElementById('loading');
-    const errorEl   = document.getElementById('error-msg');
+/* ── Load GLB ── */
+const loadingEl = document.getElementById('loading');
+const errorEl   = document.getElementById('error-msg');
 
-    const loaderScript = document.createElement('script');
-    loaderScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
-    document.head.appendChild(loaderScript);
+const loaderScript = document.createElement('script');
+loaderScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+document.head.appendChild(loaderScript);
 
-    loaderScript.onload = () => {
-      const loader = new THREE.GLTFLoader();
-      loader.load(
-        'completo_AR.glb',
-        (gltf) => {
-          const model = gltf.scene;
+loaderScript.onload = () => {
+  const loader = new THREE.GLTFLoader();
+  loader.load(
+    '/Spanish-Project/completo_AR.glb',
+    (gltf) => {
+      const model = gltf.scene;
 
-          /* Enable shadows on all meshes */
-          model.traverse(child => {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-            }
-          });
-
-          /* Scale + center: compute bounding box BEFORE adding to scene */
-          const box    = new THREE.Box3().setFromObject(model);
-          const center = box.getCenter(new THREE.Vector3());
-          const size   = box.getSize(new THREE.Vector3());
-          const scale  = 2.2 / Math.max(size.x, size.y, size.z);
-
-          model.scale.setScalar(scale);
-
-          /* Offset moves the model so its geometric center sits at the pivot origin.
-             Store as a separate clone so 'center' isn't mutated before markers use it. */
-          const offset = center.clone().multiplyScalar(-scale);
-          model.position.copy(offset);
-
-          pivot.add(model);
-
-          /* Markers share the exact same space as the model */
-          ANNOTATIONS.forEach(a => {
-            const marker = new THREE.Object3D();
-            marker.position.set(
-              a.pos[0] * scale + offset.x,
-              a.pos[1] * scale + offset.y,
-              a.pos[2] * scale + offset.z
-            );
-            pivot.add(marker);
-            a.marker = marker;
-          });
-
-          loadingEl.classList.add('hidden');
-          buildPins();
-        },
-        (xhr) => {
-          if (xhr.total) {
-            const pct = Math.round((xhr.loaded / xhr.total) * 100);
-            loadingEl.querySelector('p').textContent = `Loading… ${pct}%`;
-          }
-        },
-        (err) => {
-          console.error(err);
-          loadingEl.classList.add('hidden');
-          errorEl.style.display = 'flex';
+      /* Enable shadows on all meshes */
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
         }
-      );
-    };
+      });
 
-    /* ── Controls — mouse + touch ── */
-    let isDragging = false, prevX = 0, prevY = 0;
-    let targetRotY = 0, targetRotX = 0;
-    let zoom = 3.2, targetZoom = 3.2;
+      /* Scale + center: compute bounding box BEFORE adding to scene */
+      const box    = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size   = box.getSize(new THREE.Vector3());
+      const scale  = 2.2 / Math.max(size.x, size.y, size.z);
 
-    /* Detect touch device and update hint */
-    if ('ontouchstart' in window) {
-      document.getElementById('hint').textContent = 'Drag to rotate · Pinch to zoom · Tap a pin';
+      model.scale.setScalar(scale);
+
+      /* Offset moves the model so its geometric center sits at the pivot origin.
+         Store as a separate clone so 'center' isn't mutated before markers use it. */
+      const offset = center.clone().multiplyScalar(-scale);
+      model.position.copy(offset);
+
+      pivot.add(model);
+
+      /* Markers share the exact same space as the model */
+      ANNOTATIONS.forEach(a => {
+        const marker = new THREE.Object3D();
+        marker.position.set(
+          a.pos[0] * scale + offset.x,
+          a.pos[1] * scale + offset.y,
+          a.pos[2] * scale + offset.z
+        );
+        pivot.add(marker);
+        a.marker = marker;
+      });
+
+      loadingEl.classList.add('hidden');
+      buildPins();
+    },
+    (xhr) => {
+      if (xhr.total) {
+        const pct = Math.round((xhr.loaded / xhr.total) * 100);
+        loadingEl.querySelector('p').textContent = `Loading… ${pct}%`;
+      }
+    },
+    (err) => {
+      console.error(err);
+      loadingEl.classList.add('hidden');
+      errorEl.style.display = 'flex';
     }
+  );
+};
 
-    /* Mouse */
-    canvas.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
-    window.addEventListener('mouseup',   () => { isDragging = false; });
-    window.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      targetRotY += (e.clientX - prevX) * 0.012;
-      targetRotX += (e.clientY - prevY) * 0.006;
-      targetRotX = Math.max(-0.7, Math.min(0.7, targetRotX));
-      prevX = e.clientX; prevY = e.clientY;
+/* ── Controls — mouse + touch ── */
+let isDragging = false, prevX = 0, prevY = 0;
+let targetRotY = 0, targetRotX = 0;
+let zoom = 3.2, targetZoom = 3.2;
+
+/* Detect touch device and update hint */
+if ('ontouchstart' in window) {
+  document.getElementById('hint').textContent = 'Drag to rotate · Pinch to zoom · Tap a pin';
+}
+
+/* Mouse */
+canvas.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
+window.addEventListener('mouseup',   () => { isDragging = false; });
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  targetRotY += (e.clientX - prevX) * 0.012;
+  targetRotX += (e.clientY - prevY) * 0.006;
+  targetRotX = Math.max(-0.7, Math.min(0.7, targetRotX));
+  prevX = e.clientX; prevY = e.clientY;
+});
+canvas.addEventListener('wheel', e => {
+  targetZoom = Math.max(1.2, Math.min(6, targetZoom + e.deltaY * 0.004));
+  e.preventDefault();
+}, { passive: false });
+
+/* Touch — single finger rotate, two-finger pinch zoom */
+let touches = [];
+let lastPinchDist = null;
+
+canvas.addEventListener('touchstart', e => {
+  touches = Array.from(e.touches);
+  if (touches.length === 1) {
+    isDragging = true;
+    prevX = touches[0].clientX;
+    prevY = touches[0].clientY;
+  }
+  if (touches.length === 2) {
+    isDragging = false;
+    lastPinchDist = Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  touches = Array.from(e.touches);
+
+  if (touches.length === 1 && isDragging) {
+    targetRotY += (touches[0].clientX - prevX) * 0.012;
+    targetRotX += (touches[0].clientY - prevY) * 0.006;
+    targetRotX = Math.max(-0.7, Math.min(0.7, targetRotX));
+    prevX = touches[0].clientX;
+    prevY = touches[0].clientY;
+  }
+
+  if (touches.length === 2 && lastPinchDist !== null) {
+    const dist = Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+    targetZoom = Math.max(1.2, Math.min(6, targetZoom - (dist - lastPinchDist) * 0.01));
+    lastPinchDist = dist;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  touches = Array.from(e.touches);
+  if (touches.length < 2) lastPinchDist = null;
+  if (touches.length === 0) isDragging = false;
+}, { passive: true });
+
+/* ── Pin DOM ── */
+const pinEls    = {};
+const infoCard  = document.getElementById('info-card');
+const cardTitle = document.getElementById('card-title');
+const cardDesc  = document.getElementById('card-desc');
+let activePin   = null;
+const isMobile  = () => viewer.clientWidth <= 540;
+
+function buildPins() {
+  ANNOTATIONS.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'pin';
+    div.id = 'pin-' + a.id;
+    div.innerHTML = `<div class="pin-outer"><div class="pin-inner"></div></div><span class="pin-label">${a.label}</span>`;
+    viewer.appendChild(div);
+    pinEls[a.id] = div;
+    div.addEventListener('click', e => {
+      e.stopPropagation();
+      if (activePin === a.id && infoCard.classList.contains('visible')) { closeCard(); return; }
+      openCard(a, div);
     });
-    canvas.addEventListener('wheel', e => {
-      targetZoom = Math.max(1.2, Math.min(6, targetZoom + e.deltaY * 0.004));
-      e.preventDefault();
-    }, { passive: false });
+  });
+}
 
-    /* Touch — single finger rotate, two-finger pinch zoom */
-    let touches = [];
-    let lastPinchDist = null;
+function openCard(a, pinEl) {
+  if (activePin) document.getElementById('pin-' + activePin)?.classList.remove('active');
+  activePin = a.id;
+  pinEl.classList.add('active');
+  cardTitle.textContent = a.label;
+  cardDesc.textContent  = a.desc;
 
-    canvas.addEventListener('touchstart', e => {
-      touches = Array.from(e.touches);
-      if (touches.length === 1) {
-        isDragging = true;
-        prevX = touches[0].clientX;
-        prevY = touches[0].clientY;
-      }
-      if (touches.length === 2) {
-        isDragging = false;
-        lastPinchDist = Math.hypot(
-          touches[0].clientX - touches[1].clientX,
-          touches[0].clientY - touches[1].clientY
-        );
-      }
-    }, { passive: true });
+  if (!isMobile()) {
+    /* Desktop: float near the pin */
+    const px = parseFloat(pinEl.style.left);
+    const py = parseFloat(pinEl.style.top);
+    let cx = px + 24, cy = py - 20;
+    if (cx + 270 > viewer.clientWidth)  cx = px - 270;
+    if (cy + 160 > viewer.clientHeight) cy = viewer.clientHeight - 164;
+    if (cy < 10) cy = 10;
+    infoCard.style.left = cx + 'px';
+    infoCard.style.top  = cy + 'px';
+  }
+  /* Mobile: CSS handles positioning as bottom sheet */
+  infoCard.classList.add('visible');
+}
 
-    canvas.addEventListener('touchmove', e => {
-      e.preventDefault();
-      touches = Array.from(e.touches);
+function closeCard() {
+  infoCard.classList.remove('visible');
+  if (activePin) { document.getElementById('pin-' + activePin)?.classList.remove('active'); activePin = null; }
+}
 
-      if (touches.length === 1 && isDragging) {
-        targetRotY += (touches[0].clientX - prevX) * 0.012;
-        targetRotX += (touches[0].clientY - prevY) * 0.006;
-        targetRotX = Math.max(-0.7, Math.min(0.7, targetRotX));
-        prevX = touches[0].clientX;
-        prevY = touches[0].clientY;
-      }
+document.getElementById('close-card').addEventListener('click', e => { e.stopPropagation(); closeCard(); });
+viewer.addEventListener('click', closeCard);
 
-      if (touches.length === 2 && lastPinchDist !== null) {
-        const dist = Math.hypot(
-          touches[0].clientX - touches[1].clientX,
-          touches[0].clientY - touches[1].clientY
-        );
-        targetZoom = Math.max(1.2, Math.min(6, targetZoom - (dist - lastPinchDist) * 0.01));
-        lastPinchDist = dist;
-      }
-    }, { passive: false });
+/* ── Project markers → screen ── */
+const _wp = new THREE.Vector3();
 
-    canvas.addEventListener('touchend', e => {
-      touches = Array.from(e.touches);
-      if (touches.length < 2) lastPinchDist = null;
-      if (touches.length === 0) isDragging = false;
-    }, { passive: true });
+function updatePins() {
+  ANNOTATIONS.forEach(a => {
+    const el = pinEls[a.id];
+    if (!el || !a.marker) return;
+    a.marker.getWorldPosition(_wp);
+    const proj = _wp.clone().project(camera);
+    const x = ( proj.x * 0.5 + 0.5) * viewer.clientWidth;
+    const y = (-proj.y * 0.5 + 0.5) * viewer.clientHeight;
+    el.style.display = proj.z < 1 ? 'block' : 'none';
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+  });
+}
 
-    /* ── Pin DOM ── */
-    const pinEls    = {};
-    const infoCard  = document.getElementById('info-card');
-    const cardTitle = document.getElementById('card-title');
-    const cardDesc  = document.getElementById('card-desc');
-    let activePin   = null;
-    const isMobile  = () => viewer.clientWidth <= 540;
+/* ── Render loop ── */
+function animate() {
+  requestAnimationFrame(animate);
 
-    function buildPins() {
-      ANNOTATIONS.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'pin';
-        div.id = 'pin-' + a.id;
-        div.innerHTML = `<div class="pin-outer"><div class="pin-inner"></div></div><span class="pin-label">${a.label}</span>`;
-        viewer.appendChild(div);
-        pinEls[a.id] = div;
-        div.addEventListener('click', e => {
-          e.stopPropagation();
-          if (activePin === a.id && infoCard.classList.contains('visible')) { closeCard(); return; }
-          openCard(a, div);
-        });
-      });
-    }
+  pivot.rotation.y += (targetRotY - pivot.rotation.y) * 0.1;
+  pivot.rotation.x += (targetRotX - pivot.rotation.x) * 0.1;
+  zoom             += (targetZoom  - zoom)             * 0.1;
 
-    function openCard(a, pinEl) {
-      if (activePin) document.getElementById('pin-' + activePin)?.classList.remove('active');
-      activePin = a.id;
-      pinEl.classList.add('active');
-      cardTitle.textContent = a.label;
-      cardDesc.textContent  = a.desc;
+  /* Camera orbits around world origin where model is centered */
+  camera.position.set(0, 0, zoom);
+  camera.lookAt(0, 0, 0);
 
-      if (!isMobile()) {
-        /* Desktop: float near the pin */
-        const px = parseFloat(pinEl.style.left);
-        const py = parseFloat(pinEl.style.top);
-        let cx = px + 24, cy = py - 20;
-        if (cx + 270 > viewer.clientWidth)  cx = px - 270;
-        if (cy + 160 > viewer.clientHeight) cy = viewer.clientHeight - 164;
-        if (cy < 10) cy = 10;
-        infoCard.style.left = cx + 'px';
-        infoCard.style.top  = cy + 'px';
-      }
-      /* Mobile: CSS handles positioning as bottom sheet */
-      infoCard.classList.add('visible');
-    }
-
-    function closeCard() {
-      infoCard.classList.remove('visible');
-      if (activePin) { document.getElementById('pin-' + activePin)?.classList.remove('active'); activePin = null; }
-    }
-
-    document.getElementById('close-card').addEventListener('click', e => { e.stopPropagation(); closeCard(); });
-    viewer.addEventListener('click', closeCard);
-
-    /* ── Project markers → screen ── */
-    const _wp = new THREE.Vector3();
-
-    function updatePins() {
-      ANNOTATIONS.forEach(a => {
-        const el = pinEls[a.id];
-        if (!el || !a.marker) return;
-        a.marker.getWorldPosition(_wp);
-        const proj = _wp.clone().project(camera);
-        const x = ( proj.x * 0.5 + 0.5) * viewer.clientWidth;
-        const y = (-proj.y * 0.5 + 0.5) * viewer.clientHeight;
-        el.style.display = proj.z < 1 ? 'block' : 'none';
-        el.style.left = x + 'px';
-        el.style.top  = y + 'px';
-      });
-    }
-
-    /* ── Render loop ── */
-    function animate() {
-      requestAnimationFrame(animate);
-
-      pivot.rotation.y += (targetRotY - pivot.rotation.y) * 0.1;
-      pivot.rotation.x += (targetRotX - pivot.rotation.x) * 0.1;
-      zoom             += (targetZoom  - zoom)             * 0.1;
-
-      /* Camera orbits around world origin where model is centered */
-      camera.position.set(0, 0, zoom);
-      camera.lookAt(0, 0, 0);
-
-      renderer.render(scene, camera);
-      updatePins();
-    }
-    animate();
+  renderer.render(scene, camera);
+  updatePins();
+}
+animate();
 </script>
 </body>
 </html>
